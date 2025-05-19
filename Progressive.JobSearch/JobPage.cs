@@ -1,6 +1,7 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Interactions;
+using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +15,13 @@ namespace Progressive.JobSearch
 
         private ChromeDriver Driver;
         string ProgressiveJobPage = "https://careers.progressive.com/search/jobs/?bid=13555";
-        string JobTitles = "#search-remote_work-remote-jobs > div.page-container.fadeIn > div > div.template-content.non-menu > div.cs_block.cs_template_content.cs_template_content_jobs_search > div > div > div > div.padded-v-xlarge > div.row > div > div > div.columns.large-8.xlarge-9 > section > div > div.jobs-section__inner > div.jobs-section__list.non-facet.space-xlarge > div > div > div.columns.xlarge-6 > h4 > a";
+        string JobTitles = "div.jobs-section__list.non-facet.space-xlarge > div > div > div.columns.xlarge-6 > h4 > a";
 
         public JobPage()
         {
             ChromeOptions options = new ChromeOptions();
             options.AddArgument("--start-maximized");
-            options.AddArgument("--log-level=1");
+            //options.AddArgument("--log-level=1");
             Driver = new ChromeDriver(options);
 
 
@@ -30,18 +31,71 @@ namespace Progressive.JobSearch
         internal void NavTo()
         {
             Driver.Url = ProgressiveJobPage;
+            WaitForList();
         }
 
         internal void GetJobs()
         {
 
             var list = Driver.FindElements(By.CssSelector(JobTitles));
+            Console.WriteLine($"Total jobs found: {list.Count()}");
+            foreach (var job in list)
+            {
+                Console.WriteLine(job.Text);
+            }
         }
 
         internal void Close()
         {
             Driver.Close();
         }
+
+        internal void WaitForList()
+        {
+            WebDriverWait w = new WebDriverWait(Driver, TimeSpan.FromSeconds(10));
+            w.Until(condition =>
+            {
+                try
+                {
+                    var elementToBeDisplayed = Driver.FindElements(By.CssSelector(JobTitles));
+                    Console.WriteLine("wait for list");
+                    return elementToBeDisplayed.Count > 0;
+                }
+                catch (StaleElementReferenceException)
+                {
+                    return false;
+                }
+                catch (NoSuchElementException)
+                {
+                    return false;
+                }
+            });
+        }
+
+        internal void WaitForLoader()
+        {
+            WebDriverWait w = new WebDriverWait(Driver, TimeSpan.FromSeconds(60));
+            w.Until(condition =>
+            {
+                try
+                {
+                    var loader = Driver.FindElement(By.CssSelector("div.preloader.preloader--search"));
+                    Console.WriteLine("loader");
+                    return loader.GetDomAttribute("style").Contains("display: none;");
+                }
+                catch (StaleElementReferenceException)
+                {
+                    return false;
+                }
+                catch (NoSuchElementException)
+                {
+                    return false;
+                }
+            });
+        }
+
+
+
     }
 
 }
