@@ -20,6 +20,10 @@ namespace Progressive.JobSearch
         string JobTitles = "div.jobs-section__list.non-facet.space-xlarge > div > div > div.columns.xlarge-6 > h4 > a";
         string RemotePlus = ".space-medium > div.facet-section-inner > div > div:nth-child(3) > div.facet-item__heading > button > span";
         string RemoteCheckbox = ".facet-section-inner > div > div.facet-item.padded-v-small.plus.facet-item--expanded > div.facet-item__options > div > div:nth-child(3) > a > span.facet-item__options-item-type.facet-item__options-item-type--multi";
+        string Pages = ".jobs-section__paginate.non-facet > div > a:not([class])";
+        int CurrentPage = 1;
+        int TotalPages;
+        string NextPage = ".jobs-section__paginate.non-facet > div > a.next_page";
 
         public JobPage()
         {
@@ -55,27 +59,58 @@ namespace Progressive.JobSearch
 
         }
 
+        internal void ClickNextPage()
+        {
+            WaitForElement(NextPage);
+            var next = Driver.FindElement(By.CssSelector(NextPage));
+
+
+            // Cast driver to IJavaScriptExecutor
+            IJavaScriptExecutor js = (IJavaScriptExecutor)Driver;
+
+            // Scroll the element into view
+            js.ExecuteScript("arguments[0].scrollIntoView(true);", next);
+
+
+
+            next.Click();
+            WaitForList();
+        }
+
         internal void NavTo()
         {
             Console.WriteLine(Driver.Url);
-            if (WaitForList())
-            {
-                SelectRemote();
-            }
-            else
-            {
-                Console.WriteLine("found no job list");
-            }
+            SelectRemote();
+            WaitForList();
+            SetPages();
+        }
+
+        internal void SetPages()
+        {
+            var pages = Driver.FindElements(By.CssSelector(Pages));
+            TotalPages = 1 + pages.Count();
+            Console.WriteLine($"Total pages: {TotalPages}");
         }
 
         internal void GetJobs()
         {
-
-            var list = Driver.FindElements(By.CssSelector(JobTitles));
-            Console.WriteLine($"Total jobs found: {list.Count()}");
-            foreach (var job in list)
+            bool done = false;
+            while(!done)
             {
-                Console.WriteLine(job.Text);
+                var list = Driver.FindElements(By.CssSelector(JobTitles));
+                foreach (var job in list)
+                {
+                    Console.WriteLine(job.Text);
+                }
+                if (CurrentPage < TotalPages)
+                {
+                    CurrentPage++;
+                    ClickNextPage();
+                }
+                else
+                {
+                    done = true;
+                }
             }
         }
 
@@ -84,31 +119,27 @@ namespace Progressive.JobSearch
             Driver.Close();
         }
 
-        internal bool WaitForList()
+        internal void WaitForList()
         {
             WebDriverWait w = new WebDriverWait(Driver, TimeSpan.FromSeconds(10));
-            try
+
+            w.Until(condition =>
             {
-                w.Until(condition =>
+                //Console.WriteLine("wait for list");
+                try
                 {
-                    try
-                    {
-                        var elementToBeDisplayed = Driver.FindElements(By.CssSelector(JobTitles));
-                        Console.WriteLine("wait for list");
-                        return elementToBeDisplayed.Count > 0;
-                    }
-                    catch (StaleElementReferenceException)
-                    {
-                        return false;
-                    }
-                    catch (NoSuchElementException)
-                    {
-                        return false;
-                    }
-                });
-            }
-            catch (Exception ex) { return false; }
-            return false;
+                    var elementToBeDisplayed = Driver.FindElements(By.CssSelector(JobTitles));
+                    return elementToBeDisplayed.Count > 0;
+                }
+                catch (StaleElementReferenceException)
+                {
+                    return false;
+                }
+                catch (NoSuchElementException)
+                {
+                    return false;
+                }
+            });
         }
 
         internal void WaitForElement(string selector)
@@ -119,7 +150,7 @@ namespace Progressive.JobSearch
                 try
                 {
                     var element = Driver.FindElement(By.CssSelector(selector));
-                    Console.WriteLine("wait for element");
+                    //Console.WriteLine("wait for element");
                     return element.Enabled && element.Displayed;
                 }
                 catch (StaleElementReferenceException)
@@ -141,7 +172,7 @@ namespace Progressive.JobSearch
                 try
                 {
                     var loader = Driver.FindElement(By.CssSelector("div.preloader.preloader--search"));
-                    Console.WriteLine("loader");
+                    //Console.WriteLine("wait for loader");
                     if(loader.GetDomAttribute("style") != null)
                     {
                         return loader.GetDomAttribute("style").Contains("display: none;");
@@ -168,7 +199,7 @@ namespace Progressive.JobSearch
             Driver.FindElement(By.CssSelector(RemotePlus)).Click();
             WaitForElement(RemoteCheckbox);
             Driver.FindElement(By.CssSelector(RemoteCheckbox)).Click();
-            //WaitForLoader();
+            WaitForLoader();
 
 
         }
