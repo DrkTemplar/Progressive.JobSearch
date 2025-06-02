@@ -1,10 +1,13 @@
-﻿// See https://aka.ms/new-console-template for more information
-using Progressive.JobSearch;
+﻿using Progressive.JobSearch;
 
 Console.WriteLine("Start");
 JobPage jp = new JobPage();
 jp.NavTo();
 jp.GetJobs();
 
+// Perform your desired actions using the driver
+
+// Close the browser
 Console.WriteLine("Close");
 jp.Close();
+

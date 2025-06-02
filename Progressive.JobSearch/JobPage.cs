@@ -2,6 +2,7 @@
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Support.UI;
+using SeleniumUndetectedChromeDriver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,7 @@ namespace Progressive.JobSearch
     {
 
         private ChromeDriver Driver;
+        //private UndetectedChromeDriver Driver;
         string ProgressiveJobPage = "https://careers.progressive.com/search/jobs/?bid=13555";
         string JobTitles = "div.jobs-section__list.non-facet.space-xlarge > div > div > div.columns.xlarge-6 > h4 > a";
         string RemotePlus = ".space-medium > div.facet-section-inner > div > div:nth-child(3) > div.facet-item__heading > button > span";
@@ -22,19 +24,48 @@ namespace Progressive.JobSearch
         public JobPage()
         {
             ChromeOptions options = new ChromeOptions();
-            options.AddArgument("--start-maximized");
+            //options.AddArgument("--start-maximized");
             //options.AddArgument("--log-level=1");
-            Driver = new ChromeDriver(options);
+            //options.AddArgument("--headless=new");
+            //options.AddExcludedArgument("enable-automation");
+            //options.AddExcludedArgument("enable-logging");
+            //options.AddExcludedArgument("useAutomationExtension");
+            //options.AddArgument("--disable-blink-features=AutomationControlled");
+            //options.AddArguments("--no-sandbox");
+            //options.AddArgument("--remote-allow-origins=*");
+            //Driver = new ChromeDriver(options);
+            options.AddArgument(ProgressiveJobPage);
+            //ChromeDriverService service = ChromeDriverService.CreateDefaultService();
+            Driver = UndetectedChromeDriver.Create(options: options, driverExecutablePath: "C:\\git\\repos\\Progressive.JobSearch\\Progressive.JobSearch\\bin\\Debug\\chromedriver.exe");
+            //Driver.SwitchTo().NewWindow(WindowType.Window);
+            string window = Driver.CurrentWindowHandle;
+            //Driver = new UndetectedChromeDriver(service, options, TimeSpan.FromSeconds(10));
+            //service.Start(); //  Start the service
 
 
+
+            //using (var driver = UndetectedChromeDriver.Create(options: options, driverExecutablePath: "C:\\git\\repos\\Progressive.JobSearch\\Progressive.JobSearch\\bin\\Debug\\net8.0\\chrome-win64\\chrome.exe"))
+            //{
+            //    driver.Url = ProgressiveJobPage;
+            //    WaitForList();
+            //    SelectRemote();
+
+
+            //}
 
         }
 
         internal void NavTo()
         {
-            Driver.Url = ProgressiveJobPage;
-            WaitForList();
-            SelectRemote();
+            Console.WriteLine(Driver.Url);
+            if (WaitForList())
+            {
+                SelectRemote();
+            }
+            else
+            {
+                Console.WriteLine("found no job list");
+            }
         }
 
         internal void GetJobs()
@@ -53,26 +84,31 @@ namespace Progressive.JobSearch
             Driver.Close();
         }
 
-        internal void WaitForList()
+        internal bool WaitForList()
         {
             WebDriverWait w = new WebDriverWait(Driver, TimeSpan.FromSeconds(10));
-            w.Until(condition =>
+            try
             {
-                try
+                w.Until(condition =>
                 {
-                    var elementToBeDisplayed = Driver.FindElements(By.CssSelector(JobTitles));
-                    Console.WriteLine("wait for list");
-                    return elementToBeDisplayed.Count > 0;
-                }
-                catch (StaleElementReferenceException)
-                {
-                    return false;
-                }
-                catch (NoSuchElementException)
-                {
-                    return false;
-                }
-            });
+                    try
+                    {
+                        var elementToBeDisplayed = Driver.FindElements(By.CssSelector(JobTitles));
+                        Console.WriteLine("wait for list");
+                        return elementToBeDisplayed.Count > 0;
+                    }
+                    catch (StaleElementReferenceException)
+                    {
+                        return false;
+                    }
+                    catch (NoSuchElementException)
+                    {
+                        return false;
+                    }
+                });
+            }
+            catch (Exception ex) { return false; }
+            return false;
         }
 
         internal void WaitForElement(string selector)
