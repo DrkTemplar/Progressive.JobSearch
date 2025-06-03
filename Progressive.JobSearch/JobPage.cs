@@ -20,6 +20,10 @@ namespace Progressive.JobSearch
         string JobTitles = "div.jobs-section__list.non-facet.space-xlarge > div > div > div.columns.xlarge-6 > h4 > a";
         string RemotePlus = ".space-medium > div.facet-section-inner > div > div:nth-child(3) > div.facet-item__heading > button > span";
         string RemoteCheckbox = ".facet-section-inner > div > div.facet-item.padded-v-small.plus.facet-item--expanded > div.facet-item__options > div > div:nth-child(3) > a > span.facet-item__options-item-type.facet-item__options-item-type--multi";
+        string StatePlus = ".space-medium > div.facet-section-inner > div > div:nth-child(3) > div.facet-item__heading > button > span";
+        string StateMore = ".space-medium > div.facet-section-inner > div > div.facet-item.padded-v-small.plus.facet-item--expanded > div.facet-item__options > div.small-text > a";
+        string OhioCheckbox = "#facet-item__row--location_state_seo > div:nth-child(25) > a > span.facet-item__options-item-type.facet-item__options-item-type--multi";
+        // categories change
         string Pages = ".jobs-section__paginate.non-facet > div > a:not([class])";
         int CurrentPage = 1;
         int TotalPages;
@@ -81,6 +85,8 @@ namespace Progressive.JobSearch
         {
             Console.WriteLine(Driver.Url);
             SelectRemote();
+            WaitForList();
+            SelectOhio();
             WaitForList();
             SetPages();
         }
@@ -201,6 +207,23 @@ namespace Progressive.JobSearch
             Driver.FindElement(By.CssSelector(RemoteCheckbox)).Click();
             WaitForLoader();
 
+
+        }
+
+        internal void SelectOhio()
+        {
+            WaitForElement(StatePlus);
+            Driver.FindElement(By.CssSelector(StatePlus)).Click();
+            WaitForElement(StateMore);
+            Driver.FindElement(By.CssSelector(StateMore)).Click();
+            var ohio = Driver.FindElements(By.CssSelector(OhioCheckbox));
+            if(ohio.Count > 0)
+            {
+                WaitForElement(OhioCheckbox);
+                Driver.FindElement(By.CssSelector(OhioCheckbox)).Click();
+                WaitForLoader();
+
+            }
 
         }
 
