@@ -1,13 +1,10 @@
 ﻿using Progressive.JobSearch;
 
-Console.WriteLine("Start");
+Console.WriteLine("Start the job search");
 JobPage jp = new JobPage();
 jp.NavTo();
 jp.GetJobs();
-
-// Perform your desired actions using the driver
-
 // Close the browser
-Console.WriteLine("Close");
+Console.WriteLine("Complete");
 jp.Close();
 
