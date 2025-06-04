@@ -26,7 +26,7 @@ namespace Progressive.JobSearch
             ChromeOptions options = new ChromeOptions();
             //options.AddArgument("--start-maximized");
             //options.AddArgument("--log-level=1");
-            //options.AddArgument("--headless=new");
+            //options.AddArguments("--headless=new");
             //options.AddExcludedArgument("enable-automation");
             //options.AddExcludedArgument("enable-logging");
             //options.AddExcludedArgument("useAutomationExtension");
@@ -59,15 +59,18 @@ namespace Progressive.JobSearch
                         Console.WriteLine(job.Text);
                     }
                 }
-                if (CurrentPage < TotalPages)
+                done = CurrentPage == TotalPages;
+                if (!done)
                 {
                     CurrentPage++;
-                    ClickElement(NextPage);
-                    WaitForLoader();
-                }
-                else
-                {
-                    done = true;
+                    if (ClickElement(NextPage))
+                    {
+                        WaitForLoader();
+                    }
+                    else
+                    {
+                        done = true;
+                    }
                 }
             }
         }
@@ -87,52 +90,74 @@ namespace Progressive.JobSearch
 
         }
 
-        private void ClickElement(string selector)
+        private bool ClickElement(string selector)
         {
-            WaitForElement(selector);
-            ScrollToElement(selector);
-            Driver.FindElement(By.CssSelector(selector)).Click();
-
+            try
+            {
+                WaitForElement(selector);
+                ScrollToElement(selector);
+                Driver.FindElement(By.CssSelector(selector)).Click();
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            return false;
         }
 
         private bool ElementExists(string selector)
         {
-            WaitForElement(selector);
-
-            if(Driver.FindElements(By.CssSelector(selector)).Count > 0)
+            try
             {
-                return true;
-            };
+                WaitForElement(selector);
+
+                if (Driver.FindElements(By.CssSelector(selector)).Count > 0)
+                {
+                    return true;
+                };
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
             return false;
         }
 
-        internal void NavTo()
+        internal bool NavTo()
         {
             Console.WriteLine(Driver.Url);
-            Console.WriteLine("Filter for Ohio");
-            SelectOhio();
-            Console.WriteLine("Filter for Remote");
-            SelectRemote();
-            TotalPages = 1 + Driver.FindElements(By.CssSelector(Pages)).Count();
-            Console.WriteLine($"Total pages: {TotalPages}");
-        }
-
-        private void SelectRemote()
-        {
-            ClickElement(RemotePlus);
-            ClickElement(RemoteCheckbox);
-            WaitForLoader();
-        }
-
-        private void SelectOhio()
-        {
-            ClickElement(StatePlus);
-            ClickElement(StateMore);
-            if (ElementExists(OhioCheckbox))
+            if (SelectOhio() && SelectRemote())
             {
-                ClickElement(OhioCheckbox);
-                WaitForLoader();
+                TotalPages = 1 + Driver.FindElements(By.CssSelector(Pages)).Count();
+                Console.WriteLine($"Total pages: {TotalPages}");
+                return true;
             }
+            return false;
+        }
+
+        private bool SelectRemote()
+        {
+            //Console.WriteLine("Filter for Remote");
+            //if (ClickElement(RemotePlus) && ClickElement(RemoteCheckbox))
+            //{
+            //    WaitForLoader();
+            //    return true;
+            //}
+            //return false;
+            return true;
+        }
+
+        private bool SelectOhio()
+        {
+            Console.WriteLine("Filter for Ohio");
+            if (ClickElement(StatePlus) && ClickElement(StateMore) && ElementExists(OhioCheckbox) && ClickElement(OhioCheckbox))
+            {
+                WaitForLoader();
+                return true;
+            }
+            return false;
         }
 
         private void WaitForElement(string selector)
