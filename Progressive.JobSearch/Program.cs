@@ -1,12 +1,11 @@
 ﻿using Progressive.JobSearch;
 
 Console.WriteLine("Start the job search");
-JobPage jp = new JobPage();
-if (jp.NavTo())
+JobPage jp = new();
+if (jp.Filter())
 {
     jp.GetJobs();
 }
-// Close the browser
 Console.WriteLine("Complete");
 jp.Close();
 
